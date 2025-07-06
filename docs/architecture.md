@@ -3,37 +3,38 @@
 ## Overall Architecture Diagram
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '12px', 'fontFamily': 'arial' }}}%%
 graph TB
     %% Client Layer
-    Client[Client Web/Mobile]
+    Client["Client Web/Mobile"]
     
     %% API Gateway Layer
-    APIGateway[API Gateway REST/HTTP API]
+    APIGateway["API Gateway REST/HTTP API"]
     
     %% Lambda Layer
-    Lambda[Unified Lambda Function<br/>Command + Query Integration]
+    Lambda["Unified Lambda Function<br/>Command + Query Integration"]
     
     %% Lambda Internal Processing
-    subgraph LambdaInternal [Lambda Internal Processing]
-        Command[Command Processing]
-        Query[Query Processing]
-        Router[Router<br/>Command/Query Routing]
+    subgraph LambdaInternal ["Lambda Internal Processing"]
+        Command["Command Processing"]
+        Query["Query Processing"]
+        Router["Router<br/>Command/Query Routing"]
     end
     
     %% Data Store Layer
-    DynamoDB[(DynamoDB<br/>State Storage)]
-    Aurora[(Amazon Aurora<br/>Formatted Data)]
+    DynamoDB[("DynamoDB<br/>State Storage")]
+    Aurora[("Amazon Aurora<br/>Formatted Data")]
     
     %% Event Streaming Layer
-    KinesisStream[Kinesis Data Streams]
-    KinesisFirehose[Kinesis Data Firehose]
-    S3[(Amazon S3<br/>Archive & Analytics)]
+    KinesisStream["Kinesis Data Streams"]
+    KinesisFirehose["Kinesis Data Firehose"]
+    S3[("Amazon S3<br/>Archive & Analytics")]
     
     %% Lambda Consumer
-    LambdaConsumer[Lambda Consumer<br/>Kinesis Trigger]
+    LambdaConsumer["Lambda Consumer<br/>Kinesis Trigger"]
     
     %% External Services
-    ExternalAPI[External Payment Provider<br/>Mock Execution]
+    ExternalAPI["External Payment Provider<br/>Mock Execution"]
     
     %% Connections
     Client --> APIGateway
