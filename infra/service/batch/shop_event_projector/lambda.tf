@@ -28,12 +28,13 @@ resource "aws_lambda_function" "shop_event_projector" {
   tags = { Name = local.fqn }
 }
 
+# TODO: Enable after creating KDS
 # Lambda event source mapping configuration
 # Configuration required to trigger Lambda execution from Kinesis Data Stream
-resource "aws_lambda_event_source_mapping" "shop_event_projector" {
-  event_source_arn = aws_kinesis_stream.shop_events.arn
-  function_name    = aws_lambda_function.shop_event_projector.arn
-  enabled          = true
-  batch_size       = 100
-  starting_position = "LATEST"
-}
+# resource "aws_lambda_event_source_mapping" "shop_event_projector" {
+#   event_source_arn  = data.terraform_remote_state.kinesis.outputs.shop_events_stream.arn
+#   function_name     = aws_lambda_function.shop_event_projector.arn
+#   enabled           = true
+#   batch_size        = 100
+#   starting_position = "LATEST"
+# }
