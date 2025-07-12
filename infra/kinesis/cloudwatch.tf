@@ -1,9 +1,12 @@
-# cloudwatch logs - kinesis data firehose unified
+# cloudwatch logs - kinesis data firehose unified logs
 resource "aws_cloudwatch_log_group" "kinesis_firehose_unified_logs" {
-  name              = "/aws/kinesis-firehose/${local.fqn}-unified-logs"
+  name              = "/aws/kinesis-firehose/${var.event_types.shop.name}-logs"
   retention_in_days = 7
 
-  tags = { Name = "${local.fqn}-kinesis-firehose-unified-logs" }
+  tags = {
+    Name        = "${var.env}-${var.event_types.shop.name}"
+    Description = var.event_types.shop.description
+  }
 }
 
 resource "aws_cloudwatch_log_stream" "kinesis_firehose_unified_logs" {

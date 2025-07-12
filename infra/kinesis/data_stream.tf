@@ -1,5 +1,5 @@
 resource "aws_kinesis_stream" "shop_events" {
-  name = local.fqn
+  name = "${var.env}-${var.event_types.shop.name}"
 
   # NOTE: When stream_mode = "ON_DEMAND", shard_count does not need to be set
   # shard_count = 1
@@ -29,5 +29,8 @@ resource "aws_kinesis_stream" "shop_events" {
   encryption_type = "KMS"
   kms_key_id      = data.aws_kms_key.kinesis.arn
 
-  tags = { Name = local.fqn }
+  tags = {
+    Name        = "${var.env}-${var.event_types.shop.name}"
+    Description = var.event_types.shop.description
+  }
 }
