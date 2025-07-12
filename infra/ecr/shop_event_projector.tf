@@ -6,7 +6,7 @@ resource "aws_ecr_repository" "shop_event_projector" {
     scan_on_push = true
   }
 
-  tags = { Name = "${local.shop_event_projector}" }
+  tags = { Name = local.shop_event_projector }
 }
 
 resource "aws_ecr_lifecycle_policy" "shop_event_projector" {
