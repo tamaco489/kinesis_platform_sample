@@ -32,8 +32,8 @@ resource "aws_kinesis_firehose_delivery_stream" "shop_event_projector_events" {
     # cloudwatch logging options
     cloudwatch_logging_options {
       enabled         = true
-      log_group_name  = aws_cloudwatch_log_group.kinesis_firehose_unified_logs.name
-      log_stream_name = aws_cloudwatch_log_stream.kinesis_firehose_unified_logs.name
+      log_group_name  = aws_cloudwatch_log_group.kinesis_firehose_shop_event_projector.name
+      log_stream_name = aws_cloudwatch_log_stream.kinesis_firehose_shop_event_projector.name
     }
   }
 
