@@ -14,19 +14,19 @@ data "terraform_remote_state" "vpc_endpoint" {
   }
 }
 
+data "terraform_remote_state" "acm" {
+  backend = "s3"
+  config = {
+    bucket = "${var.env}-kinesis-platform-sample-tfstate"
+    key    = "acm/terraform.tfstate"
+  }
+}
+
 data "terraform_remote_state" "ecr" {
   backend = "s3"
   config = {
     bucket = "${var.env}-kinesis-platform-sample-tfstate"
     key    = "ecr/terraform.tfstate"
-  }
-}
-
-data "terraform_remote_state" "kinesis" {
-  backend = "s3"
-  config = {
-    bucket = "${var.env}-kinesis-platform-sample-tfstate"
-    key    = "kinesis/terraform.tfstate"
   }
 }
 
@@ -38,7 +38,7 @@ data "terraform_remote_state" "shop_core_db" {
   }
 }
 
-# AWS managed key
+# AWS Managed Key
 data "aws_kms_key" "secretsmanager" {
   key_id = "alias/aws/secretsmanager"
 }

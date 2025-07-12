@@ -1,0 +1,22 @@
+title: CreditCardList
+type: array
+items:
+  type: object
+  required:
+  - provider_type
+  - payment_provider_card_id
+  - is_default
+  properties:
+    provider_type:
+      type: string
+      description: 決済プロバイダーの種類
+      example: "fincode"
+    payment_provider_card_id:
+      type: string
+      description: 決済プロバイダー側のカードID
+      example: "card_00000001_fincode"
+    is_default:
+      type: boolean
+      description: デフォルトのクレジットカードかどうか
+      example: true
+  x-go-type-name: CreditCardList
