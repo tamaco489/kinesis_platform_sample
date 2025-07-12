@@ -14,6 +14,14 @@ data "terraform_remote_state" "network" {
   }
 }
 
+data "terraform_remote_state" "vpc_endpoint" {
+  backend = "s3"
+  config = {
+    bucket = "${var.env}-kinesis-platform-sample-tfstate"
+    key    = "vpc_endpoint/terraform.tfstate"
+  }
+}
+
 data "terraform_remote_state" "kinesis" {
   backend = "s3"
   config = {
