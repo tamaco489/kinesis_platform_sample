@@ -11,6 +11,6 @@ variable "project" {
 }
 
 locals {
-  fqn      = "${var.env}-${var.project}"
+  fqn                  = "${var.env}-${var.project}"
   shop_event_projector = "${var.env}-shop-event-projector"
 }

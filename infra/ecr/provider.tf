@@ -9,7 +9,7 @@ provider "aws" {
 }
 
 terraform {
-  required_version = "1.12.2"
+  required_version = "~> 1.12.0"
   backend "s3" {
     bucket = "stg-kinesis-platform-sample-tfstate"
     key    = "ecr/terraform.tfstate"
