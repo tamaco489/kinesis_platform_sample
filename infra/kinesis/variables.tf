@@ -1,6 +1,3 @@
-# =================================================================
-# general
-# =================================================================
 variable "env" {
   description = "The environment in which the shop event projector kds (kinesis data stream) will be created"
   type        = string

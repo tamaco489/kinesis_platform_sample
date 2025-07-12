@@ -1,4 +1,3 @@
-# kinesis data firehose - unified events
 resource "aws_kinesis_firehose_delivery_stream" "shop_event_projector_events" {
   name        = "${var.env}-${var.event_types.shop.name}"
   destination = "extended_s3"
@@ -13,7 +12,7 @@ resource "aws_kinesis_firehose_delivery_stream" "shop_event_projector_events" {
     role_arn   = aws_iam_role.kinesis_firehose_role.arn
     bucket_arn = data.terraform_remote_state.s3.outputs.logs.arn
 
-    # unified events prefix
+    # shop event projector events prefix
     prefix = "${var.event_types.shop.name}/events/!{timestamp:yyyy/MM/dd}/"
 
     # error output prefix
