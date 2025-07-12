@@ -1,5 +1,5 @@
 variable "env" {
-  description = "The environment in which the ecr will be created"
+  description = "The environment in which the sops will be created"
   type        = string
   default     = "stg"
 }
@@ -11,6 +11,5 @@ variable "project" {
 }
 
 locals {
-  fqn                  = "${var.env}-${var.project}"
-  shop_event_projector = "${var.env}-shop-event-projector"
+  fqn = "${var.env}-${var.project}"
 }

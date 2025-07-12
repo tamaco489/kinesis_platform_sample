@@ -41,7 +41,7 @@ func Load(ctx context.Context) (Config, error) {
 		ctx,
 		globalConfig.AWSConfig,
 		map[string]any{
-			fmt.Sprintf("core/%s/rds-cluster", env): &globalConfig.CoreDB,
+			fmt.Sprintf("kinesis-platform-sample/%s/shop/core/rds-cluster", env): &globalConfig.CoreDB,
 		},
 	); err != nil {
 		return Config{}, err

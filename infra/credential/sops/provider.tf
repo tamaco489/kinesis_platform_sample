@@ -12,7 +12,7 @@ terraform {
   required_version = "~> 1.12.0"
   backend "s3" {
     bucket = "stg-kinesis-platform-sample-tfstate"
-    key    = "service/batch/shop_event_projector/terraform.tfstate"
+    key    = "credential/sops/terraform.tfstate"
   }
   required_providers {
     aws = {
