@@ -1,6 +1,6 @@
 # kinesis data firehose - unified events
 resource "aws_kinesis_firehose_delivery_stream" "shop_event_projector_events" {
-  name        = "${local.fqn}-shop-event-projector-stream"
+  name        = local.fqn
   destination = "extended_s3"
 
   # kinesis stream as source
@@ -14,10 +14,10 @@ resource "aws_kinesis_firehose_delivery_stream" "shop_event_projector_events" {
     bucket_arn = data.terraform_remote_state.s3.outputs.logs.arn
 
     # unified events prefix
-    prefix = "shop_event_projector/events/!{timestamp:yyyy/MM/dd}/"
+    prefix = "shop-event-projector/events/!{timestamp:yyyy/MM/dd}/"
 
     # error output prefix
-    error_output_prefix = "shop_event_projector/errors/!{firehose:error-output-type}/!{timestamp:yyyy/MM/dd}/"
+    error_output_prefix = "shop-event-projector/errors/!{firehose:error-output-type}/!{timestamp:yyyy/MM/dd}/"
 
     # buffering settings
     buffering_size     = 128
@@ -37,5 +37,5 @@ resource "aws_kinesis_firehose_delivery_stream" "shop_event_projector_events" {
     }
   }
 
-  tags = { Name = "${local.fqn}-unified-events" }
+  tags = { Name = local.fqn }
 }
