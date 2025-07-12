@@ -22,6 +22,14 @@ data "terraform_remote_state" "kinesis" {
   }
 }
 
+data "terraform_remote_state" "shop_core_db" {
+  backend = "s3"
+  config = {
+    bucket = "${var.env}-kinesis-platform-sample-tfstate"
+    key    = "credential/core_db/terraform.tfstate"
+  }
+}
+
 # AWS managed key
 data "aws_kms_key" "secretsmanager" {
   key_id = "alias/aws/secretsmanager"
