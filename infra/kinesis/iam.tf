@@ -74,9 +74,7 @@ data "aws_iam_policy_document" "kinesis_firehose_logs_policy" {
     effect  = "Allow"
     actions = ["logs:PutLogEvents"]
     resources = [
-      aws_cloudwatch_log_group.kinesis_firehose_event_logs.arn,
-      aws_cloudwatch_log_group.kinesis_firehose_audit_logs.arn,
-      aws_cloudwatch_log_group.kinesis_firehose_error_logs.arn
+      aws_cloudwatch_log_group.kinesis_firehose_unified_logs.arn
     ]
   }
 }
@@ -85,4 +83,27 @@ resource "aws_iam_role_policy" "kinesis_firehose_logs_policy" {
   name   = "${local.fqn}-kinesis-firehose-logs-policy"
   role   = aws_iam_role.kinesis_firehose_role.id
   policy = data.aws_iam_policy_document.kinesis_firehose_logs_policy.json
+}
+
+# =================================================================
+# kinesis data stream access policy for kinesis data firehose
+# =================================================================
+data "aws_iam_policy_document" "kinesis_firehose_stream_policy" {
+  statement {
+    effect = "Allow"
+    actions = [
+      "kinesis:DescribeStream",
+      "kinesis:GetShardIterator",
+      "kinesis:GetRecords"
+    ]
+    resources = [
+      aws_kinesis_stream.shop_events.arn
+    ]
+  }
+}
+
+resource "aws_iam_role_policy" "kinesis_firehose_stream_policy" {
+  name   = "${local.fqn}-kinesis-firehose-stream-policy"
+  role   = aws_iam_role.kinesis_firehose_role.id
+  policy = data.aws_iam_policy_document.kinesis_firehose_stream_policy.json
 }
