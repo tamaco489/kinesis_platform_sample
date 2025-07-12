@@ -49,18 +49,8 @@ resource "aws_s3_bucket_policy" "logs" {
         Principal = {
           Service = "firehose.amazonaws.com"
         }
-        Action = [
-          "s3:AbortMultipartUpload",
-          "s3:GetBucketLocation",
-          "s3:GetObject",
-          "s3:ListBucket",
-          "s3:ListBucketMultipartUploads",
-          "s3:PutObject"
-        ]
-        Resource = [
-          aws_s3_bucket.logs.arn,
-          "${aws_s3_bucket.logs.arn}/*"
-        ]
+        Action   = "s3:PutObject"
+        Resource = "${aws_s3_bucket.logs.arn}/*"
         Condition = {
           StringEquals = {
             "aws:SourceAccount" = data.aws_caller_identity.current.account_id
@@ -71,4 +61,3 @@ resource "aws_s3_bucket_policy" "logs" {
   })
 }
 
-data "aws_caller_identity" "current" {}
