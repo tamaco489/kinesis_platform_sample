@@ -3,6 +3,7 @@ package configuration
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -51,6 +52,8 @@ func Load(ctx context.Context) (Config, error) {
 	); err != nil {
 		return Config{}, err
 	}
+
+	slog.InfoContext(ctx, "configuration loaded successfully", "config", globalConfig)
 
 	return globalConfig, nil
 }

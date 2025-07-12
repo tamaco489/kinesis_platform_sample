@@ -40,11 +40,6 @@ func InitDB() *sql.DB {
 
 // connect connects to a MySQL instance.
 func connect() (*sql.DB, error) {
-	// NOTE: Disable DB connection during verification
-	if configuration.Get().API.Env == "stg" {
-		return &sql.DB{}, nil
-	}
-
 	c := mysql_driver.Config{
 		User:                 configuration.Get().CoreDB.User,
 		Passwd:               configuration.Get().CoreDB.Pass,
