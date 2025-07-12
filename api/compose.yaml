@@ -1,0 +1,63 @@
+services:
+  shop-api:
+    platform: linux/amd64
+    image: cosmtrek/air:v1.62.0
+    container_name: shop-api
+    working_dir: /go/src/github.com/tamaco489/kinesis_platform_sample/api/shop
+    volumes:
+      - ./shop:/go/src/github.com/tamaco489/kinesis_platform_sample/api/shop
+      - ~/.cache/go-build:/root/.cache/go-build
+    ports:
+      - "8080:8080"
+    env_file:
+      - ./shop/.env
+    depends_on:
+      mysql:
+        condition: service_healthy
+      localstack:
+        condition: service_healthy
+
+  mysql:
+    platform: linux/amd64
+    image: mysql:8.0.40
+    container_name: core-db
+    restart: always
+    environment:
+      MYSQL_DATABASE: 'dev_core'
+      MYSQL_USER: 'core'
+      MYSQL_PASSWORD: 'password'
+      MYSQL_ROOT_PASSWORD: 'password#0'
+      MYSQL_ROOT_HOST: '%'
+      MYSQL_PORT: '3306'
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$MYSQL_ROOT_PASSWORD" ]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    volumes:
+      - ./shop/docker/db/var/lib/:/var/lib/mysql
+      - ./shop/docker/db/etc/mysql/conf.d/my.cnf:/etc/mysql/conf.d/my.cnf
+    ports:
+      - "33306:3306"
+
+  localstack:
+    image: localstack/localstack:latest
+    container_name: core-localstack
+    ports:
+      - "4566:4566"
+    environment:
+      SERVICES: secretsmanager
+      DEBUG: 1
+      AWS_DEFAULT_REGION: ap-northeast-1
+      DATA_DIR: /var/lib/localstack
+    volumes:
+      - "./shop/scripts/localstack/mysql_secret_manager.sh:/etc/localstack/init/ready.d/mysql_secret_manager.sh"
+    entrypoint: >
+      /bin/bash -c "awslocal configure set cli_follow_urlparam false && docker-entrypoint.sh"
+    env_file:
+      - ./shop/.env_localstack
+    networks:
+      default:
+        aliases:
+          - localhost.localstack.cloud
