@@ -61,4 +61,3 @@ resource "aws_s3_bucket_policy" "logs" {
   })
 }
 
-data "aws_caller_identity" "current" {}
