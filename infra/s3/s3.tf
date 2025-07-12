@@ -4,7 +4,7 @@
 resource "aws_s3_bucket" "logs" {
   bucket = "${local.fqn}-logs"
 
-  tags = { Name = "${local.fqn}-logs" }
+  tags = { Name = local.fqn }
 }
 
 # enable versioning for s3 bucket
