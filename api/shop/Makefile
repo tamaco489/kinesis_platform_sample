@@ -249,7 +249,7 @@ api-all-request: healthcheck sleep \
 	get-credit-cards sleep \
 	create-credit-card sleep \
 	delete-credit-card sleep \
-	create-reservations sleep \
+	create-reservation sleep \
 	create-charge sleep \
 	get-charge-histories sleep \
 	get-customer sleep \
@@ -340,8 +340,8 @@ delete-credit-card: ## dev: Delete credit card
 		-H 'accept: */*'
 
 # Reservation API
-.PHONY: create-reservations
-create-reservations: ## dev: Create reservation
+.PHONY: create-reservation
+create-reservation: ## dev: Create reservation
 	curl -i -sX 'POST' \
 		'http://${SHOP_API_LOCAL_HOST}:${SHOP_API_LOCAL_PORT}/shop/v1/payments/reservations' \
 		-H 'accept: application/json' \
@@ -370,7 +370,7 @@ get-charge-histories:
 stg-api-all-request: stg-healthcheck sleep \
 	stg-create-user sleep \
 	stg-get-me sleep \
-	stg-create-reservations sleep \
+	stg-create-reservation sleep \
 	stg-create-charge sleep
 
 .PHONY: stg-healthcheck
@@ -392,8 +392,8 @@ stg-get-me: ## stg: Get user information
 		'https://$(API_DOMAIN)/shop/v1/users/me' \
 		-H 'accept: application/json'
 
-.PHONY: stg-create-reservations stg-create-charge
-stg-create-reservations:
+.PHONY: stg-create-reservation stg-create-charge
+stg-create-reservation:
 	curl -i -sX 'POST' \
 		'https://$(API_DOMAIN)/shop/v1/payments/reservations' \
 		-H 'accept: application/json' \
