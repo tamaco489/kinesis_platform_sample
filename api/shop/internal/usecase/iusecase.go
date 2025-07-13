@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/tamaco489/kinesis_platform_sample/api/shop/internal/gen"
+	"github.com/tamaco489/kinesis_platform_sample/api/shop/internal/library/kinesis_client"
 
 	repository_gen_sqlc "github.com/tamaco489/kinesis_platform_sample/api/shop/internal/repository/gen_sqlc"
 )
@@ -86,20 +87,20 @@ type IReservationUseCase interface {
 }
 
 type reservationUseCase struct {
-	db      *sql.DB
-	queries repository_gen_sqlc.Queries
-	dbtx    repository_gen_sqlc.DBTX
+	db            *sql.DB
+	queries       repository_gen_sqlc.Queries
+	kinesisClient kinesis_client.KinesisClient
 }
 
 func NewReservationUseCase(
 	db *sql.DB,
 	queries repository_gen_sqlc.Queries,
-	dbtx repository_gen_sqlc.DBTX,
+	kinesisClient kinesis_client.KinesisClient,
 ) IReservationUseCase {
 	return &reservationUseCase{
-		db:      db,
-		queries: queries,
-		dbtx:    dbtx,
+		db:            db,
+		queries:       queries,
+		kinesisClient: kinesisClient,
 	}
 }
 
