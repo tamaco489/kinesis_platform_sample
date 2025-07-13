@@ -19,8 +19,8 @@ type KinesisWrapper struct {
 }
 
 const (
-	kinesisMaxRetryAttempts = 2
-	kinesisTimeout          = 8 * time.Second
+	kinesisTimeout          = 8 * time.Second // api-gw timeout is 30 seconds
+	kinesisMaxRetryAttempts = 2               // Allow 2 retries (i.e., a total of 3 requests)
 )
 
 func NewKinesisClient(cfg aws.Config) *KinesisWrapper {
