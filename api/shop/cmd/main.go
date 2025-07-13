@@ -33,13 +33,13 @@ func main() {
 		}
 	}()
 
-	ctx, cancel := context.WithTimeout(ctx, 200*time.Microsecond)
+	shutdownCtx, cancel := context.WithTimeout(ctx, 500*time.Millisecond)
 	defer cancel()
 	quit := make(chan os.Signal, 1)
 
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
-	if err = server.Shutdown(ctx); err != nil {
+	if err = server.Shutdown(shutdownCtx); err != nil {
 		slog.ErrorContext(ctx, "shutdown server...", "error", err)
 	}
 
