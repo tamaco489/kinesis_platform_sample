@@ -235,6 +235,18 @@ stg-core-dump-import: ## stg: Dump import
 # =================================================================
 # API request operations (dev)
 # =================================================================
+ENV ?= dev
+
+ifeq ($(ENV),dev)
+	API_BASE_URL := http://localhost:8080
+else ifeq ($(ENV),stg)
+	API_BASE_URL := https://$(API_DOMAIN)
+else ifeq ($(ENV),prd)
+	API_BASE_URL := https://$(API_DOMAIN)
+else
+	$(error Invalid ENV specified: $(ENV))
+endif
+
 .PHONY: api-all-request
 sleep: ## dev: Sleep for 0.1 seconds
 	@sleep 0.1
@@ -256,94 +268,97 @@ api-all-request: healthcheck sleep \
 	create-customer sleep \
 	delete-customer sleep
 
-SHOP_API_LOCAL_HOST := localhost
-SHOP_API_LOCAL_PORT := 8080
+stg-api-all-request: healthcheck sleep \
+	create-user sleep \
+	get-me sleep \
+	create-reservation sleep \
+	create-charge sleep
 
 .PHONY: healthcheck
 healthcheck: ## dev: healthcheck API request
 	curl -i -X 'GET' \
-		'http://${SHOP_API_LOCAL_HOST}:${SHOP_API_LOCAL_PORT}/shop/v1/healthcheck' \
+		'${API_BASE_URL}/shop/v1/healthcheck' \
 		-H 'accept: application/json'
 
 # User API
 .PHONY: create-user get-me create-profile get-profile-me
 create-user: ## dev: Create user
 	curl -i -X 'POST' \
-		'http://${SHOP_API_LOCAL_HOST}:${SHOP_API_LOCAL_PORT}/shop/v1/users' \
+		'${API_BASE_URL}/shop/v1/users' \
 		-H 'accept: application/json' \
 		-d ''
 
 get-me: ## dev: Get user information
 	curl -i -X 'GET' \
-		'http://${SHOP_API_LOCAL_HOST}:${SHOP_API_LOCAL_PORT}/shop/v1/users/me' \
+		'${API_BASE_URL}/shop/v1/users/me' \
 		-H 'accept: application/json'
 
 create-profile: ## dev: Create user profile
 	curl -sX 'POST' \
-		'http://${SHOP_API_LOCAL_HOST}:${SHOP_API_LOCAL_PORT}/shop/v1/users/profiles' \
+		'${API_BASE_URL}/shop/v1/users/profiles' \
 		-H 'accept: application/json' \
 		-H 'Content-Type: application/json' \
 		-d '{"name": {"first_name": "智","last_name": "真皿","first_name_roman": "Satoshi","last_name_roman": "Masara"}, "address": { "region": "関東", "zip_code": "150-8377", "prefecture": "東京都", "city": "渋谷区", "street": "宇田川町", "other": "15番1号"}, "birthdate": "2000-01-01", "image_url": "https://example"}' | jq .
 
 get-profile-me: ## dev: Get user profile
 	curl -sX 'GET' \
-		'http://${SHOP_API_LOCAL_HOST}:${SHOP_API_LOCAL_PORT}/shop/v1/users/profiles/me' \
+		'${API_BASE_URL}/shop/v1/users/profiles/me' \
 		-H 'accept: application/json' | jq .
 
 # Product API
 .PHONY: get-products get-product-by-id
 get-products: ## dev: Get product list
 	curl -sX 'GET' \
-		'http://${SHOP_API_LOCAL_HOST}:${SHOP_API_LOCAL_PORT}/shop/v1/products?cursor=MjAwMDEwMDE%3D&limit=10' \
+		'${API_BASE_URL}/shop/v1/products?cursor=MjAwMDEwMDE%3D&limit=10' \
 		-H 'accept: application/json' | jq .
 
 get-product-by-id: ## dev: Get product details
 	curl -sX 'GET' \
-		'http://${SHOP_API_LOCAL_HOST}:${SHOP_API_LOCAL_PORT}/shop/v1/products/10001002' \
+		'${API_BASE_URL}/shop/v1/products/10001002' \
 		-H 'accept: application/json' | jq .
 
 # External payment service customer information API
 .PHONY: get-customer create-customer delete-customer
 get-customer: ## dev: Get customer information
 	curl -sX 'GET' \
-		'http://${SHOP_API_LOCAL_HOST}:${SHOP_API_LOCAL_PORT}/shop/v1/payment/customers/10001001' \
+		'${API_BASE_URL}/shop/v1/payment/customers/10001001' \
 		-H 'accept: application/json' | jq .
 
 create-customer: ## dev: Create customer
 	curl -i -sX 'POST' \
-		'http://${SHOP_API_LOCAL_HOST}:${SHOP_API_LOCAL_PORT}/shop/v1/payment/customers' \
+		'${API_BASE_URL}/shop/v1/payment/customers' \
 		-H 'accept: application/json' \
 		-d ''
 
 delete-customer: ## dev: Delete customer
 	curl -i -sX 'DELETE' \
-		'http://${SHOP_API_LOCAL_HOST}:${SHOP_API_LOCAL_PORT}/shop/v1/payment/customers' \
+		'${API_BASE_URL}/shop/v1/payment/customers' \
 		-H 'accept: */*'
 
 # Card API
 .PHONY: get-credit-cards create-credit-card delete-credit-card
 get-credit-cards: ## dev: Get credit card list
 	curl -sX 'GET' \
-		'http://${SHOP_API_LOCAL_HOST}:${SHOP_API_LOCAL_PORT}/shop/v1/payments/cards' \
+		'${API_BASE_URL}/shop/v1/payments/cards' \
 		-H 'accept: application/json' | jq .
 
 create-credit-card: ## dev: Create credit card
 	curl -i -sX 'POST' \
-		'http://${SHOP_API_LOCAL_HOST}:${SHOP_API_LOCAL_PORT}/shop/v1/payments/cards' \
+		'${API_BASE_URL}/shop/v1/payments/cards' \
 		-H 'accept: */*' \
 		-H 'Content-Type: application/json' \
 		-d '{"token": "9f9213b2-9687-6910-d2ec-3a247582be2d", "is_default": true}'
 
 delete-credit-card: ## dev: Delete credit card
 	curl -i -sX 'DELETE' \
-		'http://${SHOP_API_LOCAL_HOST}:${SHOP_API_LOCAL_PORT}/shop/v1/payments/cards' \
+		'${API_BASE_URL}/shop/v1/payments/cards' \
 		-H 'accept: */*'
 
 # Reservation API
 .PHONY: create-reservation
 create-reservation: ## dev: Create reservation
 	curl -i -sX 'POST' \
-		'http://${SHOP_API_LOCAL_HOST}:${SHOP_API_LOCAL_PORT}/shop/v1/payments/reservations' \
+		'${API_BASE_URL}/shop/v1/payments/reservations' \
 		-H 'accept: application/json' \
 		-H 'Content-Type: application/json' \
 		-d '[{"product_id": 10001001, "quantity": 1}, {"product_id": 10001003, "quantity": 1}, {"product_id": 10001009, "quantity": 3}, {"product_id": 10001014, "quantity": 2}]'
@@ -353,59 +368,15 @@ create-reservation: ## dev: Create reservation
 # sample: make create-charge RESERVATION_ID=01976fe3-e429-7803-bfdc-fa4216f0c6b0
 create-charge: ## dev: Create charge
 	curl -i -sX 'POST' \
-		'http://${SHOP_API_LOCAL_HOST}:${SHOP_API_LOCAL_PORT}/shop/v1/payments/charges' \
+		'${API_BASE_URL}/shop/v1/payments/charges' \
 		-H 'accept: application/json' \
 		-H 'Content-Type: application/json' \
 		-d '{"reservation_id": "$(RESERVATION_ID)"}'
 
 get-charge-histories:
 	curl -sX 'GET' \
-		'http://${SHOP_API_LOCAL_HOST}:${SHOP_API_LOCAL_PORT}/shop/v1/payments/charges/histories?offset=0&limit=10' \
+		'${API_BASE_URL}/shop/v1/payments/charges/histories?offset=0&limit=10' \
 		-H 'accept: application/json' | jq .
-
-
-# =================================================================
-# API request operations (stg)
-# =================================================================
-stg-api-all-request: stg-healthcheck sleep \
-	stg-create-user sleep \
-	stg-get-me sleep \
-	stg-create-reservation sleep \
-	stg-create-charge sleep
-
-.PHONY: stg-healthcheck
-# sample: make stg-healthcheck API_DOMAIN=api.domain_name.com
-stg-healthcheck: ## stg: healthcheck API request
-	curl -i -X 'GET' \
-		'https://$(API_DOMAIN)/shop/v1/healthcheck' \
-		-H 'accept: application/json'
-
-.PHONY: stg-create-user stg-get-me stg-create-product-comment
-stg-create-user: ## stg: Create user
-	curl -i -X 'POST' \
-		'https://$(API_DOMAIN)/shop/v1/users' \
-		-H 'accept: application/json' \
-		-d ''
-
-stg-get-me: ## stg: Get user information
-	curl -i -X 'GET' \
-		'https://$(API_DOMAIN)/shop/v1/users/me' \
-		-H 'accept: application/json'
-
-.PHONY: stg-create-reservation stg-create-charge
-stg-create-reservation:
-	curl -i -sX 'POST' \
-		'https://$(API_DOMAIN)/shop/v1/payments/reservations' \
-		-H 'accept: application/json' \
-		-H 'Content-Type: application/json' \
-		-d '[{"product_id": 10001001, "quantity": 1}, {"product_id": 10001003, "quantity": 1}, {"product_id": 10001009, "quantity": 3}, {"product_id": 10001014, "quantity": 2}]'
-
-stg-create-charge: ## stg: Create charge
-	curl -i -sX 'POST' \
-		'https://$(API_DOMAIN)/shop/v1/payments/charges' \
-		-H 'accept: application/json' \
-		-H 'Content-Type: application/json' \
-		-d '{"reservation_id": "$(RESERVATION_ID)"}'
 
 
 # =================================================================
