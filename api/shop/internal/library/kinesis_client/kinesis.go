@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/aws/retry"
 	"github.com/aws/aws-sdk-go-v2/service/kinesis"
+	"github.com/tamaco489/kinesis_platform_sample/api/shop/internal/configuration"
 )
 
 type KinesisClient interface {
@@ -24,10 +25,30 @@ const (
 )
 
 func NewKinesisClient(cfg aws.Config) *KinesisWrapper {
+	var opt kinesis.Options
+	switch configuration.Get().API.Env {
+	case "dev":
+		// do nothing
+
+	case "stg":
+		opt = kinesis.Options{
+			Retryer:       retry.AddWithMaxAttempts(retry.NewStandard(), kinesisMaxRetryAttempts),
+			ClientLogMode: aws.LogRequestWithBody | aws.LogResponseWithBody,
+		}
+	case "prd":
+		opt = kinesis.Options{
+			Retryer:       retry.AddWithMaxAttempts(retry.NewStandard(), kinesisMaxRetryAttempts),
+			ClientLogMode: 0, // No log output
+		}
+	default:
+		// do nothing
+	}
+
 	client := kinesis.NewFromConfig(cfg, func(o *kinesis.Options) {
-		o.Retryer = retry.AddWithMaxAttempts(retry.NewStandard(), kinesisMaxRetryAttempts)
-		o.ClientLogMode = aws.LogRequestWithBody | aws.LogResponseWithBody
+		o.Retryer = opt.Retryer
+		o.ClientLogMode = opt.ClientLogMode
 	})
+
 	return &KinesisWrapper{Client: client}
 }
 

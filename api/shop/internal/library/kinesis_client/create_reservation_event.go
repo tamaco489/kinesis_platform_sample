@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log/slog"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -28,9 +27,7 @@ type CreateReservationProduct struct {
 	UnitPrice uint32 `json:"unit_price"`
 }
 
-func NewCreateReservationEvent(
-	userID string, reservedAt time.Time, products []CreateReservationProduct,
-) (CreateReservationEvent, error) {
+func NewCreateReservationEvent(userID string, reservedAt time.Time, products []CreateReservationProduct) (CreateReservationEvent, error) {
 	reservationID, err := uuid.NewV7()
 	if err != nil {
 		return CreateReservationEvent{}, fmt.Errorf("failed to new uuid for reservation: %w", err)
@@ -56,12 +53,6 @@ func (k *KinesisWrapper) CreateReservationEvent(ctx context.Context, event Creat
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal event data: %w", err)
 	}
-
-	slog.InfoContext(ctx, "sending event to kinesis",
-		slog.String("stream_name", configuration.Get().KinesisDataStream.ShopEvent),
-		slog.String("partition_key", event.EventID),
-		slog.String("data", string(eventData)),
-	)
 
 	result, err := k.Client.PutRecord(timeoutCtx, &kinesis.PutRecordInput{
 		StreamName:   aws.String(configuration.Get().KinesisDataStream.ShopEvent),
