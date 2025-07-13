@@ -90,19 +90,11 @@ func (ru reservationUseCase) CreateReservation(ctx *gin.Context, uid string, req
 	}
 
 	if configuration.Get().API.Env != "dev" {
-		slog.InfoContext(ctx, "reservation event sent to kinesis start...", slog.String("reservation_id", event.ReservationID), slog.String("user_id", uid), slog.Any("event", event))
-
 		res, err := ru.kinesisClient.CreateReservationEvent(ctx, event)
 		if err != nil {
 			return gen.CreateReservation500Response{}, fmt.Errorf("failed to send reservation event to kinesis: %w", err)
 		}
-
-		slog.InfoContext(ctx, "reservation event sent to kinesis successfully",
-			slog.String("reservation_id", event.ReservationID),
-			slog.String("user_id", uid),
-			slog.Any("event", event),
-			slog.Any("response", res),
-		)
+		slog.InfoContext(ctx, "reservation event sent to kinesis successfully", slog.String("reservation_id", event.ReservationID), slog.String("user_id", uid), slog.Any("response", res))
 	}
 
 	return gen.CreateReservation201JSONResponse{

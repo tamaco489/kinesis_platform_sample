@@ -74,13 +74,8 @@ func NewKinesisClient(cfg aws.Config) *KinesisWrapper {
 //   - Automatic retry on network errors, timeouts, and throttling
 func customRetryer() aws.Retryer {
 	retryer := retry.NewStandard(func(o *retry.StandardOptions) {
-		// Set maximum attempts (initial request + 2 retries = 3 total requests)
 		o.MaxAttempts = kinesisMaxRetryAttempts + 1
-
-		// Set exponential backoff with jitter
 		o.Backoff = retry.NewExponentialJitterBackoff(kinesisBaseDelay)
-
-		// Set maximum delay
 		o.MaxBackoff = kinesisMaxDelay
 	})
 	return retryer
