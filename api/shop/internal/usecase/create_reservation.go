@@ -97,7 +97,12 @@ func (ru reservationUseCase) CreateReservation(ctx *gin.Context, uid string, req
 			return gen.CreateReservation500Response{}, fmt.Errorf("failed to send reservation event to kinesis: %w", err)
 		}
 
-		slog.InfoContext(ctx, "reservation event sent to kinesis successfully", slog.String("reservation_id", event.ReservationID), slog.String("user_id", uid), slog.Any("event", event), slog.Any("response", res))
+		slog.InfoContext(ctx, "reservation event sent to kinesis successfully",
+			slog.String("reservation_id", event.ReservationID),
+			slog.String("user_id", uid),
+			slog.Any("event", event),
+			slog.Any("response", res),
+		)
 	}
 
 	return gen.CreateReservation201JSONResponse{
