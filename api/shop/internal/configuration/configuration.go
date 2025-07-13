@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/kelseyhightower/envconfig"
@@ -39,8 +38,6 @@ func Get() Config { return globalConfig }
 
 func Load(ctx context.Context) (Config, error) {
 	envconfig.MustProcess("", &globalConfig)
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
 
 	env := globalConfig.API.Env
 	if err := loadAWSConf(ctx, env); err != nil {

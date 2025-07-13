@@ -15,7 +15,9 @@ import (
 )
 
 func main() {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
 	cnf, err := configuration.Load(ctx)
 	if err != nil {
 		slog.Error("Failed to read configuration", "error", err)
@@ -33,12 +35,15 @@ func main() {
 		}
 	}()
 
-	shutdownCtx, cancel := context.WithTimeout(ctx, 500*time.Millisecond)
-	defer cancel()
+	// Create a channel to receive OS signals and wait for a signal
 	quit := make(chan os.Signal, 1)
-
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
+
+	// After receiving a signal, create a context for shutdown and perform the shutdown within 500 milliseconds
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
+	defer shutdownCancel()
+
 	if err = server.Shutdown(shutdownCtx); err != nil {
 		slog.ErrorContext(ctx, "shutdown server...", "error", err)
 	}
