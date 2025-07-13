@@ -7,6 +7,8 @@ import (
 
 func (c *Controllers) Healthcheck(ctx *gin.Context, request gen.HealthcheckRequestObject) (gen.HealthcheckResponseObject, error) {
 
+	// time.Sleep(10 * time.Second)
+
 	return gen.Healthcheck200JSONResponse{
 		Message: "OK",
 	}, nil
