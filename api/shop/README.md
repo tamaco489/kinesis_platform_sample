@@ -34,7 +34,7 @@ apigw-requestid: M4IEYhT3tjMEJIg=
 
 create reservations api
 ```bash
-$ make stg-create-reservations API_DOMAIN=api.xxx.xxx@exmple.com
+$ make stg-create-reservation API_DOMAIN=api.xxx.xxx@exmple.com
 curl -i -sX 'POST' \
         'https://api.xxx.xxx@exmple.com/shop/v1/payments/reservations' \
         -H 'accept: application/json' \
