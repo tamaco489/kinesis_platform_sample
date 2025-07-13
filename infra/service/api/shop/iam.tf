@@ -66,4 +66,24 @@ resource "aws_iam_role_policy_attachment" "shop_api_secrets_manager" {
 # =================================================================
 # kinesis data stream iam policy
 # =================================================================
-# todo: kinesis data stream に イベントを送信する権限を追加する必要あり
+data "aws_iam_policy_document" "shop_api_kinesis" {
+  statement {
+    effect = "Allow"
+    actions = [
+      "kinesis:PutRecord",
+      "kinesis:PutRecords",
+    ]
+    resources = [data.terraform_remote_state.kinesis.outputs.shop_events_stream.arn]
+  }
+}
+
+resource "aws_iam_policy" "shop_api_kinesis" {
+  name        = "${local.fqn}-kinesis"
+  description = "Allows Lambda to send events to Kinesis Data Stream"
+  policy      = data.aws_iam_policy_document.shop_api_kinesis.json
+}
+
+resource "aws_iam_role_policy_attachment" "shop_api_kinesis" {
+  role       = aws_iam_role.shop_api.name
+  policy_arn = aws_iam_policy.shop_api_kinesis.arn
+}
