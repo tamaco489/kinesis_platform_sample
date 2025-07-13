@@ -20,10 +20,18 @@ type KinesisWrapper struct {
 }
 
 const (
-	kinesisTimeout          = 8 * time.Second // api-gw timeout is 30 seconds
-	kinesisMaxRetryAttempts = 2               // Allow 2 retries (i.e., a total of 3 requests)
+	kinesisTimeout          = 8 * time.Second        // api-gw timeout is 30 seconds
+	kinesisMaxRetryAttempts = 2                      // Allow 2 retries (i.e., a total of 3 requests)
+	kinesisBaseDelay        = 100 * time.Millisecond // 100ms
+	kinesisMaxDelay         = 2 * time.Second        // 2 seconds
 )
 
+// NewKinesisClient creates a new Kinesis client with environment-specific configuration.
+//
+// The client is configured with custom retry logic and logging based on the environment:
+//   - dev: No retry configuration, basic logging
+//   - stg: Custom retry with exponential backoff, detailed request/response logging
+//   - prd: Custom retry with exponential backoff, no logging for performance
 func NewKinesisClient(cfg aws.Config) *KinesisWrapper {
 	var opt kinesis.Options
 	switch configuration.Get().API.Env {
@@ -32,12 +40,12 @@ func NewKinesisClient(cfg aws.Config) *KinesisWrapper {
 
 	case "stg":
 		opt = kinesis.Options{
-			Retryer:       retry.AddWithMaxAttempts(retry.NewStandard(), kinesisMaxRetryAttempts),
+			Retryer:       customRetryer(),
 			ClientLogMode: aws.LogRequestWithBody | aws.LogResponseWithBody,
 		}
 	case "prd":
 		opt = kinesis.Options{
-			Retryer:       retry.AddWithMaxAttempts(retry.NewStandard(), kinesisMaxRetryAttempts),
+			Retryer:       customRetryer(),
 			ClientLogMode: 0, // No log output
 		}
 	default:
@@ -50,6 +58,32 @@ func NewKinesisClient(cfg aws.Config) *KinesisWrapper {
 	})
 
 	return &KinesisWrapper{Client: client}
+}
+
+// customRetryer creates a custom retryer with exponential backoff for Kinesis operations.
+//
+// Configuration:
+//   - Max attempts: 3 total requests (initial + 2 retries)
+//   - Base delay: 100ms with exponential backoff
+//   - Max delay: 2 seconds to prevent excessive delays
+//   - Jitter: Added to prevent thundering herd problems
+//
+// Retry behavior:
+//   - 1st retry: ~100ms delay
+//   - 2nd retry: ~200ms delay (capped at 2 seconds)
+//   - Automatic retry on network errors, timeouts, and throttling
+func customRetryer() aws.Retryer {
+	retryer := retry.NewStandard(func(o *retry.StandardOptions) {
+		// Set maximum attempts (initial request + 2 retries = 3 total requests)
+		o.MaxAttempts = kinesisMaxRetryAttempts + 1
+
+		// Set exponential backoff with jitter
+		o.Backoff = retry.NewExponentialJitterBackoff(kinesisBaseDelay)
+
+		// Set maximum delay
+		o.MaxBackoff = kinesisMaxDelay
+	})
+	return retryer
 }
 
 var _ KinesisClient = (*KinesisWrapper)(nil)
