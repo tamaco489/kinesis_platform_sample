@@ -29,6 +29,10 @@ type Config struct {
 		Pass string `json:"password"`
 		Name string `json:"dbname"`
 	}
+
+	KinesisDataStream struct {
+		ShopEvent string `envconfig:"KDS_SHOP_EVENT"`
+	}
 }
 
 func Get() Config { return globalConfig }

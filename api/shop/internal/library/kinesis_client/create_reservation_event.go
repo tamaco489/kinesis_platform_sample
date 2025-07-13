@@ -4,11 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/kinesis"
 	"github.com/google/uuid"
+	"github.com/tamaco489/kinesis_platform_sample/api/shop/internal/configuration"
 )
 
 type CreateReservationEvent struct {
@@ -47,14 +49,28 @@ func NewCreateReservationEvent(
 }
 
 func (k *KinesisWrapper) CreateReservationEvent(ctx context.Context, event CreateReservationEvent) (*kinesis.PutRecordOutput, error) {
+	timeoutCtx, cancel := context.WithTimeout(ctx, kinesisTimeout)
+	defer cancel()
+
 	eventData, err := json.Marshal(event)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to marshal event data: %w", err)
 	}
 
-	return k.Client.PutRecord(ctx, &kinesis.PutRecordInput{
-		StreamName:   aws.String("stg-shop-event-projector"),
-		Data:         eventData,
+	slog.InfoContext(ctx, "sending event to kinesis",
+		slog.String("stream_name", configuration.Get().KinesisDataStream.ShopEvent),
+		slog.String("partition_key", event.EventID),
+		slog.String("data", string(eventData)),
+	)
+
+	result, err := k.Client.PutRecord(timeoutCtx, &kinesis.PutRecordInput{
+		StreamName:   aws.String(configuration.Get().KinesisDataStream.ShopEvent),
 		PartitionKey: aws.String(event.EventID),
+		Data:         eventData,
 	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to put record to kinesis: %w", err)
+	}
+
+	return result, nil
 }
