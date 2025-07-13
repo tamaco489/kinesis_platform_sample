@@ -16,7 +16,7 @@ import (
 
 func (ru reservationUseCase) CreateReservation(ctx *gin.Context, uid string, request gen.CreateReservationRequestObject) (gen.CreateReservationResponseObject, error) {
 
-	// Get product information. ※Product ID, Product Price, Discount Rate, Stock Quantity
+	// Get product information: Product ID, Product Price, Discount Rate, Stock Quantity
 	ids := make([]uint32, len(*request.Body))
 
 	// Create a map of product_id and quantity.
@@ -26,7 +26,7 @@ func (ru reservationUseCase) CreateReservation(ctx *gin.Context, uid string, req
 		productIDQuantityMap[p.ProductId] = p.Quantity
 	}
 
-	// NOTE: stg環境のみ、RDSの設定が完了するまでは mock 的に値を返す。
+	// NOTE: In the stg environment only, return mock values until RDS setup is complete.
 	var products []repository_gen_sqlc.GetProductsByIDsRow
 	var err error
 	switch configuration.Get().API.Env {
