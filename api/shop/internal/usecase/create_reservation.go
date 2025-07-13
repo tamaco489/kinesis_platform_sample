@@ -129,14 +129,13 @@ func (ru reservationUseCase) calculateDiscountedPrices(products []repository_gen
 	// If the discount rate is specified for the product, change the price to the discounted price. If the discount rate is not specified, use the product price as is.
 	discountedPrice := make(map[uint32]uint32)
 	for _, p := range products {
-		// If the discount rate is specified, change the price to the discounted price.
-		if p.DiscountRate.Valid {
-			discountedPrice[p.ProductID] = uint32(p.ProductPrice * (100 - p.DiscountRate.Int32) / 100)
-		}
 		// If the discount rate is not specified, use the product price as is.
 		if !p.DiscountRate.Valid {
 			discountedPrice[p.ProductID] = uint32(p.ProductPrice)
+			continue
 		}
+		// If the discount rate is specified, change the price to the discounted price.
+		discountedPrice[p.ProductID] = uint32(p.ProductPrice * (100 - p.DiscountRate.Int32) / 100)
 	}
 
 	return discountedPrice
