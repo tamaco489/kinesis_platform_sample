@@ -3,6 +3,7 @@ package controller
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -21,6 +22,9 @@ func NewShopAPIServer(cnf configuration.Config) (*http.Server, error) {
 	r.Use(gin.LoggerWithFormatter(logger.LogFormatter))
 	r.Use(cors.New(corsCnf))
 	r.Use(gin.Recovery())
+
+	// Since the maximum execution time for Lambda is 30 seconds, shut down after 29 seconds
+	r.Use(timeoutMiddleware(30 * time.Second))
 
 	// new mysql
 	db := repository_store.InitDB()

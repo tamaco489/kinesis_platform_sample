@@ -1,23 +1,22 @@
 package usecase
 
 import (
+	"database/sql"
 	"fmt"
 	"log/slog"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
+	"github.com/tamaco489/kinesis_platform_sample/api/shop/internal/configuration"
 	"github.com/tamaco489/kinesis_platform_sample/api/shop/internal/gen"
+	"github.com/tamaco489/kinesis_platform_sample/api/shop/internal/library/kinesis_client"
 
 	repository_gen_sqlc "github.com/tamaco489/kinesis_platform_sample/api/shop/internal/repository/gen_sqlc"
 )
 
 func (ru reservationUseCase) CreateReservation(ctx *gin.Context, uid string, request gen.CreateReservationRequestObject) (gen.CreateReservationResponseObject, error) {
 
-	// Adding a 500ms delay to simulate a performance-challenged API that handles a large number of record operations.
-	time.Sleep(500 * time.Millisecond)
-
-	// Get product information. ※Product ID, Product Price, Discount Rate, Stock Quantity
+	// Get product information: Product ID, Product Price, Discount Rate, Stock Quantity
 	ids := make([]uint32, len(*request.Body))
 
 	// Create a map of product_id and quantity.
@@ -27,9 +26,43 @@ func (ru reservationUseCase) CreateReservation(ctx *gin.Context, uid string, req
 		productIDQuantityMap[p.ProductId] = p.Quantity
 	}
 
-	products, err := ru.queries.GetProductsByIDs(ctx, ru.dbtx, ids)
-	if err != nil {
-		return gen.CreateReservation500Response{}, fmt.Errorf("failed to get products: %w", err)
+	// NOTE: In the stg environment only, return mock values until RDS setup is complete.
+	var products []repository_gen_sqlc.GetProductsByIDsRow
+	var err error
+	switch configuration.Get().API.Env {
+	case "dev":
+		products, err = ru.queries.GetProductsByIDs(ctx, ru.db, ids)
+		if err != nil {
+			return gen.CreateReservation500Response{}, fmt.Errorf("failed to get products: %w", err)
+		}
+
+	case "stg":
+		products = []repository_gen_sqlc.GetProductsByIDsRow{
+			{
+				ProductID:            10001001,
+				ProductStockQuantity: 10000,
+				ProductPrice:         0,
+				DiscountRate:         sql.NullInt32{Valid: false},
+			},
+			{
+				ProductID:            10001003,
+				ProductStockQuantity: 2000,
+				ProductPrice:         3000,
+				DiscountRate:         sql.NullInt32{Int32: 20, Valid: true},
+			},
+			{
+				ProductID:            10001009,
+				ProductStockQuantity: 10000,
+				ProductPrice:         300,
+				DiscountRate:         sql.NullInt32{Valid: false},
+			},
+			{
+				ProductID:            10001014,
+				ProductStockQuantity: 5000,
+				ProductPrice:         1000,
+				DiscountRate:         sql.NullInt32{Int32: 15, Valid: true},
+			},
+		}
 	}
 
 	// Validate product availability
@@ -40,14 +73,32 @@ func (ru reservationUseCase) CreateReservation(ctx *gin.Context, uid string, req
 	// Calculate the discounted price of the product.
 	discountedPriceMap := ru.calculateDiscountedPrices(products)
 
-	// Save reservation information. Reservation information is saved in reservation_products and reservations, so a transaction is issued.
-	reservationID, err := ru.saveReservation(ctx, uid, products, productIDQuantityMap, discountedPriceMap)
+	reservedAt := time.Now()
+
+	reservationProducts := make([]kinesis_client.CreateReservationProduct, len(products))
+	for i, p := range products {
+		reservationProducts[i] = kinesis_client.CreateReservationProduct{
+			ProductID: p.ProductID,
+			Quantity:  productIDQuantityMap[p.ProductID],
+			UnitPrice: discountedPriceMap[p.ProductID],
+		}
+	}
+
+	event, err := kinesis_client.NewCreateReservationEvent(uid, reservedAt, reservationProducts)
 	if err != nil {
-		return gen.CreateReservation500Response{}, nil
+		return gen.CreateReservation500Response{}, fmt.Errorf("failed to new create reservation event: %w", err)
+	}
+
+	if configuration.Get().API.Env != "dev" {
+		res, err := ru.kinesisClient.CreateReservationEvent(ctx, event)
+		if err != nil {
+			return gen.CreateReservation500Response{}, fmt.Errorf("failed to send reservation event to kinesis: %w", err)
+		}
+		slog.InfoContext(ctx, "reservation event sent to kinesis successfully", slog.String("reservation_id", event.ReservationID), slog.String("user_id", uid), slog.Any("response", res))
 	}
 
 	return gen.CreateReservation201JSONResponse{
-		ReservationId: reservationID,
+		ReservationId: event.ReservationID,
 	}, nil
 }
 
@@ -62,24 +113,11 @@ func (ru reservationUseCase) validateProductAvailability(ctx *gin.Context, produ
 	for _, p := range products {
 		// If the stock quantity is 0
 		if p.ProductStockQuantity == 0 {
-			slog.ErrorContext(
-				ctx,
-				"product out of stock",
-				"product_id", p.ProductID,
-				"product_stock_quantity", p.ProductStockQuantity,
-			)
-			return fmt.Errorf("product out of stock")
+			return fmt.Errorf("product out of stock: product_id=%d, product_stock_quantity=%d", p.ProductID, p.ProductStockQuantity)
 		}
 		// If the requested quantity exceeds the stock quantity
 		if p.ProductStockQuantity < productIDQuantityMap[p.ProductID] {
-			slog.ErrorContext(
-				ctx,
-				"product stock quantity is less than requested quantity",
-				"product_id", p.ProductID,
-				"product_stock_quantity", p.ProductStockQuantity,
-				"requested_quantity", productIDQuantityMap[p.ProductID],
-			)
-			return fmt.Errorf("product stock quantity is less than requested quantity")
+			return fmt.Errorf("product stock quantity is less than requested quantity: product_id=%d, product_stock_quantity=%d, requested_quantity=%d", p.ProductID, p.ProductStockQuantity, productIDQuantityMap[p.ProductID])
 		}
 	}
 
@@ -102,53 +140,4 @@ func (ru reservationUseCase) calculateDiscountedPrices(products []repository_gen
 	}
 
 	return discountedPrice
-}
-
-// saveReservation: Save reservation information. Reservation information is saved in reservation_products and reservations, so a transaction is issued.
-func (ru reservationUseCase) saveReservation(ctx *gin.Context, uid string, products []repository_gen_sqlc.GetProductsByIDsRow, productIDQuantityMap map[uint32]uint32, discountedPriceMap map[uint32]uint32) (string, error) {
-
-	// Generate reservation ID
-	reservationID, err := uuid.NewV7()
-	if err != nil {
-		return "", fmt.Errorf("failed to new uuid for reservation: %w", err)
-	}
-
-	// Start a transaction
-	tx, err := ru.db.BeginTx(ctx, nil)
-	if err != nil {
-		return "", fmt.Errorf("failed to begin transaction: %w", err)
-	}
-
-	// Rollback the transaction when the function exits
-	defer func() { _ = tx.Rollback() }()
-
-	// Create a reservation
-	if err := ru.queries.CreateReservation(ctx, tx, repository_gen_sqlc.CreateReservationParams{
-		ReservationID: reservationID.String(),
-		UserID:        uid,
-		ReservedAt:    time.Now(),
-		ExpiredAt:     time.Now().Add(15 * time.Minute), // Expires after 15 minutes
-		Status:        repository_gen_sqlc.ReservationsStatusPending,
-	}); err != nil {
-		return "", fmt.Errorf("failed to create reservation: %w", err)
-	}
-
-	// Create reservation products
-	for _, p := range products {
-		if err := ru.queries.CreateReservationProduct(ctx, tx, repository_gen_sqlc.CreateReservationProductParams{
-			ReservationID: reservationID.String(),
-			ProductID:     p.ProductID,
-			Quantity:      productIDQuantityMap[p.ProductID],
-			UnitPrice:     discountedPriceMap[p.ProductID],
-		}); err != nil {
-			return "", fmt.Errorf("failed to create reservation product: %w", err)
-		}
-	}
-
-	// Commit the transaction
-	if err := tx.Commit(); err != nil {
-		return "", fmt.Errorf("failed to transaction commit: %w", err)
-	}
-
-	return reservationID.String(), nil
 }

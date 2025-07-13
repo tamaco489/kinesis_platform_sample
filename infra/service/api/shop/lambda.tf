@@ -4,7 +4,7 @@ resource "aws_lambda_function" "shop_api" {
   role          = aws_iam_role.shop_api.arn
   package_type  = "Image"
   image_uri     = "${data.terraform_remote_state.ecr.outputs.shop_api.url}:shop_api_v0.0.0"
-  timeout       = 20
+  timeout       = 30
   memory_size   = 128
 
   vpc_config {
@@ -23,6 +23,7 @@ resource "aws_lambda_function" "shop_api" {
       API_SERVICE_NAME = "shop-api"
       API_ENV          = "stg"
       API_PORT         = "8080"
+      KDS_SHOP_EVENT   = data.terraform_remote_state.kinesis.outputs.shop_events_stream.name
     }
   }
 

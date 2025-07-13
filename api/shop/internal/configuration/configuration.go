@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/kelseyhightower/envconfig"
@@ -29,14 +28,16 @@ type Config struct {
 		Pass string `json:"password"`
 		Name string `json:"dbname"`
 	}
+
+	KinesisDataStream struct {
+		ShopEvent string `envconfig:"KDS_SHOP_EVENT"`
+	}
 }
 
 func Get() Config { return globalConfig }
 
 func Load(ctx context.Context) (Config, error) {
 	envconfig.MustProcess("", &globalConfig)
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
 
 	env := globalConfig.API.Env
 	if err := loadAWSConf(ctx, env); err != nil {
@@ -53,7 +54,7 @@ func Load(ctx context.Context) (Config, error) {
 		return Config{}, err
 	}
 
-	slog.InfoContext(ctx, "configuration loaded successfully", "config", globalConfig)
+	slog.InfoContext(ctx, "configuration loaded successfully", slog.Any("core_db", globalConfig.CoreDB))
 
 	return globalConfig, nil
 }
