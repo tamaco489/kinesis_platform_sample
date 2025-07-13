@@ -5,7 +5,7 @@ stg:
 
 healthcheck api
 ```bash
-$ make stg-healthcheck API_DOMAIN=api.xxx.xxx@exmple.com
+$ make healthcheck ENV=stg API_DOMAIN=api.xxx.xxx@exmple.com
 curl -i -X 'GET' \
         'https://api.xxx.xxx@exmple.com/shop/v1/healthcheck' \
         -H 'accept: application/json'
@@ -19,7 +19,7 @@ apigw-requestid: M4d70iX7tjMEJ0Q=
 ```
 get me api
 ```bash
-$ make stg-get-me API_DOMAIN=api.xxx.xxx@exmple.com
+$ make get-me ENV=stg API_DOMAIN=api.xxx.xxx@exmple.com
 curl -i -X 'GET' \
         'https://api.xxx.xxx@exmple.com/shop/v1/users/me' \
         -H 'accept: application/json'
@@ -34,7 +34,7 @@ apigw-requestid: M4IEYhT3tjMEJIg=
 
 create reservations api
 ```bash
-$ make stg-create-reservation API_DOMAIN=api.xxx.xxx@exmple.com
+$ make create-reservation ENV=stg API_DOMAIN=api.xxx.xxx@exmple.com
 curl -i -sX 'POST' \
         'https://api.xxx.xxx@exmple.com/shop/v1/payments/reservations' \
         -H 'accept: application/json' \
@@ -51,7 +51,7 @@ apigw-requestid: M4dYAjaVNjMEPpQ=
 
 create charge api
 ```bash
-$ make stg-create-charge API_DOMAIN=api.xxx.xxx@exmple.com RESERVATION_ID=0197b73c-2920-75a9-9941-1a66ffb59f09
+$ make create-charge ENV=stg API_DOMAIN=api.xxx.xxx@exmple.com RESERVATION_ID=0197b73c-2920-75a9-9941-1a66ffb59f09
 curl -i -sX 'POST' \
         'https://api.xxx.xxx@exmple.com/shop/v1/payments/charges' \
         -H 'accept: application/json' \
