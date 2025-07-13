@@ -53,7 +53,7 @@ func Load(ctx context.Context) (Config, error) {
 		return Config{}, err
 	}
 
-	slog.InfoContext(ctx, "configuration loaded successfully", "config", globalConfig)
+	slog.InfoContext(ctx, "configuration loaded successfully", slog.Any("core_db", globalConfig.CoreDB))
 
 	return globalConfig, nil
 }
